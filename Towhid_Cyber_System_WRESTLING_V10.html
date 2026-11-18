@@ -1,0 +1,409 @@
+<!doctype html>
+<html lang="bn">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<meta name="theme-color" content="#050805"><title>Towhid Cyber System</title>
+<style>
+:root{--g:#39ff14;--bg:#030603;--panel:#071007;--line:#1b6b1b}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:#d7ffd2;font-family:Arial,sans-serif;min-height:100vh}canvas{position:fixed;inset:0;width:100%;height:100%;z-index:-1;opacity:.22}header{padding:22px 14px;text-align:center;border-bottom:1px solid var(--line);background:#020602eF}h1{color:var(--g);font-size:24px;letter-spacing:2px;text-shadow:0 0 12px #39ff1480;margin:4px}header p{color:#8cce84;font-size:12px;margin:7px}.wrap{max-width:760px;margin:auto;padding:14px}.status{border:1px solid var(--line);border-radius:10px;padding:12px;background:#061006eF;margin-bottom:14px;font-size:13px}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.tile, .panel{background:#061006f2;border:1px solid #176317;border-radius:10px;padding:14px;box-shadow:0 0 12px #00ff0010}.tile{color:var(--g);font-weight:bold;text-align:left;min-height:76px;cursor:pointer}.tile small{display:block;color:#9ccf96;font-weight:normal;margin-top:7px}.tile:active,button:active{background:#123312}.panel{margin-top:14px;display:none}.panel.active{display:block}.panel h2{font-size:17px;color:var(--g);margin:0 0 12px}.muted{font-size:12px;color:#9cbd98;line-height:1.5}button{background:#092009;border:1px solid var(--g);color:var(--g);padding:10px 13px;border-radius:7px;margin:5px 4px 5px 0;font-weight:bold}input,textarea,select{width:100%;background:#010401;color:#d7ffd2;border:1px solid #267b26;border-radius:7px;padding:11px;margin:6px 0}textarea{min-height:90px;resize:vertical}.result{border:1px dashed #267b26;padding:10px;border-radius:7px;margin-top:10px;white-space:pre-wrap;word-break:break-word;min-height:38px}.radar{width:190px;height:190px;border:2px solid var(--g);border-radius:50%;margin:15px auto;position:relative;overflow:hidden;background:repeating-radial-gradient(circle,transparent 0 28px,#1a8d1a55 29px 30px)}.radar:before{content:"";position:absolute;inset:0;background:conic-gradient(from 0deg,transparent 0 300deg,#39ff1450 360deg);border-radius:50%;animation:spin 2.2s linear infinite}.radar:after{content:"";position:absolute;width:8px;height:8px;border-radius:50%;background:var(--g);left:50%;top:50%;box-shadow:0 0 12px var(--g);transform:translate(-50%,-50%)}@keyframes spin{to{transform:rotate(360deg)}}.scanline{height:3px;background:var(--g);box-shadow:0 0 10px var(--g);animation:pulse 1s infinite alternate}@keyframes pulse{to{opacity:.3}}footer{text-align:center;color:#679d61;font-size:11px;padding:22px}
+.homeRadar{display:flex;align-items:center;gap:16px;border:1px solid var(--line);border-radius:12px;padding:12px;background:#061006f2;margin-bottom:14px}.homeRadar .radar{width:112px;height:112px;flex:0 0 112px;margin:0}.homeRadarText{font:12px monospace;color:#9cbd98;line-height:1.7}.homeRadarText b{color:var(--g);font-size:14px}.developerCard{border:1px solid #39ff14;border-radius:12px;padding:18px;background:radial-gradient(circle at top,#103510 0%,#020602 70%);box-shadow:0 0 20px #39ff1430;text-align:center;margin-bottom:14px}.developerCard .devName{font:bold 30px monospace;color:#39ff14;text-shadow:0 0 14px #39ff14;margin:14px 0}.developerCard .devInfo{font:12px monospace;color:#8cce84;line-height:1.9;text-align:left;border:1px dashed #267b26;border-radius:8px;padding:12px;margin-top:12px}@media(max-width:380px){h1{font-size:20px}.grid{gap:8px}.tile{padding:11px;font-size:13px}}
+
+#bootGate{position:fixed;inset:0;z-index:50;background:radial-gradient(circle at center,#092109 0%,#020502 65%);display:flex;align-items:center;justify-content:center;padding:22px;text-align:center}
+#bootCard{width:min(420px,100%);border:1px solid #39ff14;border-radius:14px;padding:26px 18px;background:#020802f2;box-shadow:0 0 28px #39ff1450}
+#bootTitle{font: bold 23px monospace;letter-spacing:2px;color:#39ff14;text-shadow:0 0 14px #39ff14;margin:10px 0}
+#bootStatus{font:12px monospace;color:#a4ff9b;min-height:38px;margin:14px 0}
+#bootBar{height:7px;border:1px solid #39ff14;border-radius:20px;overflow:hidden;margin:15px 0;background:#061006}
+#bootFill{height:100%;width:0;background:#39ff14;box-shadow:0 0 12px #39ff14}
+#bootGate.booting #bootCard{animation:terminalPulse .55s infinite alternate}
+#bootGate.booting #bootTitle{animation:glitch .18s infinite alternate}
+@keyframes terminalPulse{to{box-shadow:0 0 38px #39ff14a0}}
+@keyframes glitch{to{transform:translateX(2px);text-shadow:2px 0 #b4ffab,-2px 0 #00aa00,0 0 18px #39ff14}}
+body.locked>header,body.locked>main,body.locked>footer{visibility:hidden}
+
+/* Neon multiplayer arcade arena */
+.arcadeFrame{border:1px solid #39ff14;border-radius:14px;padding:13px;background:radial-gradient(circle at 50% 0%,#123b12 0%,#030803 68%);box-shadow:0 0 18px #39ff1425}
+.arcadeTop{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;font:11px monospace;color:#a5ff9b;margin-bottom:10px}
+.arcadeScreen{border:1px solid #247d24;border-radius:10px;padding:14px;text-align:center;background:#010501;margin:10px 0}
+.arcadeTarget{width:94px;height:94px;border-radius:50%;border:2px solid #286d28;background:#071007;color:#619d61;font-size:24px;font-weight:bold;box-shadow:inset 0 0 18px #143514;margin:10px auto;display:flex;align-items:center;justify-content:center;touch-action:manipulation}
+.arcadeTarget.ready{border-color:#39ff14;color:#021002;background:#39ff14;box-shadow:0 0 12px #39ff14,0 0 35px #39ff1490;transform:scale(1.04)}
+.arcadePads{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:12px 0}
+.arcadePad{height:64px;border-radius:9px;border:1px solid #1c651c;background:linear-gradient(145deg,#0b1d0b,#020602);color:#4e9d4e;font-size:18px;margin:0}
+.arcadePad.lit{background:#39ff14;color:#001900;box-shadow:0 0 18px #39ff14;border-color:#c2ffb9}
+.arcadeScore{font:12px monospace;white-space:pre-wrap;color:#baffb2;border:1px dashed #287b28;padding:10px;border-radius:8px;margin-top:10px}
+
+/* Color Carnival: deliberately bright, non-hacker game interior */
+.carnival{background:#f7f4ff;color:#25213a;border:1px solid #d8d0f2;border-radius:16px;padding:14px;box-shadow:0 8px 24px #0002}
+.carnival h2{color:#46318c!important;text-align:center;font-size:22px}
+.carnival p{color:#625b78}
+.carnival button{background:#5b4bce;color:#fff;border:0;border-radius:10px;padding:12px 16px;font-weight:700}
+.carnival button:disabled{opacity:.45}
+.carnival select{background:#fff;color:#29233f;border:1px solid #c9c1e8}
+.carnival .carnival-board{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:5px;margin:12px 0}
+.carnival .carnival-cell{min-height:48px;border-radius:9px;background:#e7e2f8;border:1px solid #d2c9ef;display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:2px;font-size:10px;color:#4b4560;padding:3px}
+.carnival .carnival-cell.finish{background:#ffe9a8;border-color:#f2c85b}
+.carnival .carnival-token{font-size:17px;line-height:1}
+.carnival .carnival-info{background:#fff;border:1px solid #e3def2;border-radius:11px;padding:11px;margin:8px 0;color:#39334f}
+.carnival .carnival-score{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+.carnival .carnival-player{background:#fff;border:1px solid #e4e0f0;border-left:5px solid var(--pc);border-radius:9px;padding:8px;font-size:12px;color:#38324c}
+.carnival .carnival-player.current{outline:2px solid #8b7be7}
+.carnival .carnival-die{font-size:40px;text-align:center;margin:4px}
+
+/* Classic Ludo: colorful game interior, separate from cyber menu theme */
+.ludoWrap{background:#fff8e8;color:#293044;border-radius:16px;padding:12px;font-family:Arial,sans-serif}
+.ludoIntro{text-align:center;color:#46516a;font-size:13px;line-height:1.5}
+.ludoSetup{display:flex;gap:8px;align-items:center;justify-content:center;flex-wrap:wrap;margin:10px 0}
+.ludoSetup label{font-weight:bold;color:#39445b}.ludoSetup select{padding:9px;border:1px solid #cbd2df;border-radius:8px;background:white;color:#263047}
+.ludoSetup button,.ludoControls button{background:#3949ab;color:white;border:0;border-radius:9px;padding:10px 14px;font-weight:bold}
+.ludoTurn{text-align:center;background:#edf1ff;color:#283593;padding:10px;border-radius:9px;font-weight:bold;margin:9px 0}
+.ludoBoard{display:grid;grid-template-columns:repeat(13,minmax(0,1fr));gap:2px;background:#65708a;padding:5px;border-radius:10px;max-width:520px;margin:0 auto;aspect-ratio:1}
+.ludoCell{background:#fff;display:flex;align-items:center;justify-content:center;min-width:0;min-height:0;border-radius:2px;font-size:clamp(8px,2.3vw,14px);position:relative}
+.ludoCell.track{background:#fff}.ludoCell.safe{background:#fff0b3}.ludoCell.red{background:#ffcdd2}.ludoCell.green{background:#c8e6c9}.ludoCell.yellow{background:#fff9c4}.ludoCell.blue{background:#bbdefb}
+.ludoCell.base-red{background:#ef5350}.ludoCell.base-green{background:#66bb6a}.ludoCell.base-yellow{background:#ffca28}.ludoCell.base-blue{background:#42a5f5}
+.ludoCell.center{background:conic-gradient(#ef5350 0 25%,#66bb6a 0 50%,#ffca28 0 75%,#42a5f5 0);color:#fff;font-weight:bold}
+.ludoToken{border:0;border-radius:50%;width:85%;height:85%;min-width:10px;min-height:10px;padding:0;color:white;font-weight:bold;box-shadow:0 1px 3px #3338}
+.ludoToken.red{background:#d32f2f}.ludoToken.green{background:#2e7d32}.ludoToken.yellow{background:#f9a825;color:#342500}.ludoToken.blue{background:#1565c0}
+.ludoControls{display:flex;align-items:center;justify-content:center;gap:15px;margin:12px 0}.ludoDie{font-size:34px;background:white;border:2px solid #d8deeb;border-radius:12px;padding:5px 14px;min-width:56px;text-align:center}
+.ludoChoices{text-align:center;color:#35415b;min-height:35px;margin:8px 0}.ludoPick{border:0;border-radius:8px;padding:9px 12px;margin:4px;color:white;font-weight:bold}.ludoScores{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}.ludoScore{background:#eef1f8;padding:8px;border-radius:8px;font-size:12px}.ludoRules{font-size:11px;color:#59647b;line-height:1.45;margin-top:10px}
+
+/* Colorful, arcade-style friendly wrestling game interior */
+.wrestle{background:linear-gradient(135deg,#fff2d8,#e6f4ff 55%,#fce4ec);color:#26324b;border:2px solid #f0b44c;border-radius:16px;padding:14px;box-shadow:0 8px 24px #0002}
+.wrestle h2{color:#a52a68!important;text-align:center;font-size:22px}
+.wrestle p{color:#4c5870}
+.wrestle button{background:#5b4bce;color:white;border:0;border-radius:10px;padding:11px 14px;font-weight:bold}
+.wrestle select{background:white;color:#26324b;border:1px solid #c5cfe0}
+.wrestleArena{background:linear-gradient(135deg,#e9f5ff,#fff0f5);border:3px solid #6c63c7;border-radius:14px;padding:12px;margin:10px 0;text-align:center}
+.wrestleFighters{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.wrestleFighter{background:white;border:2px solid var(--fighter);border-radius:12px;padding:10px;color:#26324b}
+.wrestleAvatar{font-size:42px}
+.wrestleBar{height:13px;background:#e5e7eb;border-radius:20px;overflow:hidden;margin:7px 0}
+.wrestleBar span{display:block;height:100%;background:linear-gradient(90deg,#35b86b,#f5c542);width:100%;transition:width .25s}
+.wrestleLog{background:white;color:#34405a;border:1px solid #d7ddec;border-radius:10px;padding:10px;min-height:45px;margin-top:9px}
+
+</style></head>
+<body class="locked"><div id="bootGate"><div id="bootCard"><div style="font:12px monospace;color:#8dff80">[ SECURE TERMINAL INITIALIZATION ]</div><div id="bootTitle">TOWHID CYBER SYSTEM</div><div id="bootStatus">SYSTEM READY — PRESS LOGIN TO START</div><div id="bootBar"><div id="bootFill"></div></div><button id="loginStart" onclick="startCyberLogin()">▶ LOGIN / ENTER SYSTEM</button><div style="font:10px monospace;color:#659d60;margin-top:14px">BLACK • GREEN • CYBER MODE</div></div></div><canvas id="rain"></canvas>
+<header><h1>⟦ TOWHID CYBER SYSTEM ⟧</h1><p>BLACK • GREEN • CYBER TOOLKIT</p><div class="scanline"></div></header>
+<main class="wrap">
+<div class="status">SYSTEM STATUS: <b style="color:#39ff14">ONLINE</b> <span id="net" style="float:right">Checking connection…</span></div>
+<div class="homeRadar"><div class="radar" aria-label="Continuously rotating radar animation"></div><div class="homeRadarText"><b>📡 ROUTER RADAR ACTIVE</b><br>CONTINUOUS SCANNING EFFECT<br><span style="color:#39ff14">● RADAR SWEEP RUNNING</span><br><small>Visual radar animation; real Wi-Fi results require native Android bridge.</small></div></div>
+<div class="developerCard"><div style="font:12px monospace;color:#8dff80;letter-spacing:3px">[ SYSTEM CREATOR ]</div><div class="devName">TOWHID</div><div class="scanline"></div><div style="font:bold 14px monospace;color:#caffc4;letter-spacing:2px;margin:14px 0">CYBER SYSTEM DEVELOPER</div><div class="devInfo">&gt; DEVELOPER: Towhid<br>&gt; PROJECT: Towhid Cyber System<br>&gt; VERSION: 2.0<br>&gt; PLATFORM: Android<br>&gt; MINIMUM TARGET: Android 9<br>&gt; INTERFACE: Black / Neon Green<br>&gt; STATUS: IN DEVELOPMENT</div><p style="font:11px monospace;color:#39ff14;margin:14px 0 0">[ LEARN • BUILD • STAY SECURE ]</p></div>
+<div class="grid">
+<button class="tile" onclick="show('wifi')">🌐 NETWORK STATUS<small>Basic connection info</small></button>
+<button class="tile" onclick="show('encoder')">🔐 TEXT ENCODER<small>Encode / decode Base64</small></button>
+<button class="tile" onclick="show('runner')">⌨️ CODE PAD<small>Run simple JavaScript</small></button>
+<button class="tile" onclick="show('htmlRunner')">🌐 HTML RUNNER<small>Write HTML and preview</small></button>
+<button class="tile" onclick="show('cssRunner')">🎨 CSS RUNNER<small>Test CSS designs</small></button>
+<button class="tile" onclick="show('webLab')">🧪 WEB PLAYGROUND<small>HTML + CSS + JavaScript</small></button>
+<button class="tile" onclick="show('game')">🎮 NUMBER GUESS<small>Guess the secret number</small></button>
+<button class="tile" onclick="show('rps')">✊ ROCK PAPER SCISSORS<small>Play against the system</small></button>
+<button class="tile" onclick="show('memory')">🧠 MEMORY MATCH<small>Remember the code sequence</small></button>
+<button class="tile" onclick="show('reaction')">⚡ REACTION TEST<small>Test your reaction speed</small></button>
+<button class="tile" onclick="show('quiz')">💻 CYBER QUIZ<small>Quick cyber safety questions</small></button>
+<button class="tile" onclick="show('tictactoe')">⭕ TIC TAC TOE<small>Play X and O against a friend</small></button>
+<button class="tile" onclick="show('mathgame')">🧮 QUICK MATH<small>Solve as many as you can</small></button>
+<button class="tile" onclick="show('wordgame')">🔤 WORD SCRAMBLE<small>Unscramble the cyber words</small></button>
+
+<button class="tile" onclick="show('simon')">🟩 SIMON SEQUENCE<small>Repeat the glowing pattern</small></button>
+<button class="tile" onclick="show('snake')">🐍 CYBER SNAKE<small>Collect data and grow</small></button>
+<button class="tile" onclick="show('sudoku')">🔢 MINI SUDOKU<small>Solve the 4×4 number grid</small></button>
+<button class="tile" onclick="show('maze')">🧩 MAZE ESCAPE<small>Find the exit with arrow keys</small></button>
+<button class="tile" onclick="show('codebreaker')">🔐 CODE BREAKER<small>Crack the secret 3-digit code</small></button>
+<button class="tile" onclick="show('partyArena')">👥 MULTIPLAYER PARTY ARENA<small>2–6 players • play together on one device</small></button>
+<button class="tile" onclick="show('neonArena')">🕹️ NEON CYBER ARENA<small>Arcade-style reaction battle • 2–6 players</small></button>
+<button class="tile" onclick="show('colorCarnival')">🎲 COLOR CARNIVAL<small>6-player board race • classic colorful game</small></button>
+<button class="tile" onclick="show('ludoGame')">🎲 CLASSIC LUDO<small>Colorful 2–4 player Ludo board</small></button>
+
+<button class="tile" onclick="show('wrestling')">🤼 COLOR WRESTLING<small>2-player friendly arcade wrestling</small></button>
+<button class="tile" onclick="show('about')">🛡️ ABOUT SYSTEM<small>App information</small></button>
+</div>
+<section id="wifi" class="panel"><h2>🌐 NETWORK STATUS</h2><p class="muted">Browser-এর সাধারণ online/offline অবস্থা দেখায়; আশেপাশের Wi-Fi নাম বা password দেখায় না।</p><button onclick="checkNet()">CHECK STATUS</button><div id="wifiResult" class="result"></div></section>
+<section id="encoder" class="panel"><h2>🔐 TEXT ENCODER / DECODER</h2><textarea id="encInput" placeholder="Write your text here"></textarea><button onclick="encodeText()">ENCODE</button><button onclick="decodeText()">DECODE</button><div id="encOutput" class="result">Result will appear here.</div></section>
+<section id="runner" class="panel"><h2>⌨️ JAVASCRIPT CODE PAD</h2><p class="muted">শুধু নিজের লেখা সাধারণ JavaScript পরীক্ষা করো।</p><textarea id="codeInput" placeholder="console.log('Hello Cyber World');"></textarea><button onclick="runCode()">RUN CODE</button><div id="codeOutput" class="result">Output…</div></section>
+<section id="htmlRunner" class="panel"><h2>🌐 HTML CODE RUNNER</h2><p class="muted">HTML লিখে নিরাপদ sandbox preview-তে দেখো।</p><textarea id="htmlCode" placeholder="<h1>Hello Towhid!</h1>\n<p>My first webpage</p>"><h1 style="color:green">Hello Towhid!</h1><p>My first webpage</p></textarea><button onclick="runHTML()">▶ RUN HTML</button><iframe id="htmlPreview" title="HTML preview" sandbox="" style="width:100%;height:180px;background:white;border:1px solid #39ff14;border-radius:8px;margin-top:10px"></iframe></section>
+<section id="cssRunner" class="panel"><h2>🎨 CSS CODE RUNNER</h2><p class="muted">CSS style পরিবর্তন করে preview দেখো।</p><textarea id="cssCode">body{background:#071007;color:#39ff14;font-family:Arial;text-align:center;padding:25px}h2{text-shadow:0 0 8px #39ff14}</textarea><button onclick="runCSS()">▶ RUN CSS</button><iframe id="cssPreview" title="CSS preview" sandbox="" style="width:100%;height:180px;background:white;border:1px solid #39ff14;border-radius:8px;margin-top:10px"></iframe></section>
+<section id="webLab" class="panel"><h2>🧪 HTML + CSS + JS PLAYGROUND</h2><p class="muted">তিনটি কোড একসঙ্গে লিখে নিজের ওয়েবপেজ পরীক্ষা করো। Preview sandbox-এর মধ্যে চলে।</p><label>HTML</label><textarea id="labHTML"><h2 id="hello">Cyber Lab</h2><button id="demo">CLICK ME</button></textarea><label>CSS</label><textarea id="labCSS">body{background:#061006;color:#39ff14;font-family:monospace;padding:18px}button{background:#092009;color:#39ff14;border:1px solid #39ff14;padding:10px}</textarea><label>JavaScript</label><textarea id="labJS">document.getElementById('demo').onclick=()=>{document.getElementById('hello').textContent='ACCESS GRANTED'};</textarea><button onclick="runWebLab()">▶ RUN ALL CODE</button><iframe id="labPreview" title="Web playground preview" sandbox="allow-scripts" style="width:100%;height:220px;background:white;border:1px solid #39ff14;border-radius:8px;margin-top:10px"></iframe></section>
+<section id="game" class="panel"><h2>🎮 NUMBER GUESS</h2><p class="muted">১ থেকে ১০-এর মধ্যে একটি সংখ্যা অনুমান করো।</p><input id="guess" type="number" min="1" max="10" placeholder="Enter 1–10"><button onclick="guessNum()">GUESS</button><button onclick="newGame()">NEW GAME</button><div id="gameResult" class="result">Game ready.</div></section>
+<section id="rps" class="panel"><h2>✊ ROCK PAPER SCISSORS</h2><p class="muted">Choose your move and play against the system.</p><button onclick="playRPS('Rock')">✊ ROCK</button><button onclick="playRPS('Paper')">✋ PAPER</button><button onclick="playRPS('Scissors')">✌️ SCISSORS</button><div id="rpsResult" class="result">Choose a move to start.</div></section>
+<section id="memory" class="panel"><h2>🧠 MEMORY CODE</h2><p class="muted">Memorize the sequence, then type it back.</p><button onclick="memoryStart()">SHOW SEQUENCE</button><input id="memoryInput" placeholder="Type the sequence here" autocomplete="off"><button onclick="memoryCheck()">CHECK</button><div id="memoryResult" class="result">Ready.</div></section>
+<section id="reaction" class="panel"><h2>⚡ REACTION TEST</h2><p class="muted">Press START, wait until the panel turns green, then tap it quickly. Don't tap early.</p><button onclick="reactionStart()">START TEST</button><button id="reactionTap" onclick="reactionClick()" disabled>WAIT…</button><div id="reactionResult" class="result">Your reaction time will appear here.</div></section>
+<section id="quiz" class="panel"><h2>💻 CYBER SAFETY QUIZ</h2><p id="quizQuestion" class="muted">Press NEXT QUESTION to begin.</p><div id="quizChoices"></div><div id="quizResult" class="result">Learn safe online habits.</div><button onclick="nextQuiz()">NEXT QUESTION</button></section>
+<section id="tictactoe" class="panel"><h2>⭕ TIC TAC TOE</h2><p class="muted">Take turns with a friend. X starts first.</p><div id="tttBoard" style="display:grid;grid-template-columns:repeat(3,1fr);gap:7px;max-width:270px;margin:12px auto"></div><div id="tttResult" class="result">X's turn.</div><button onclick="resetTTT()">NEW ROUND</button></section>
+<section id="mathgame" class="panel"><h2>🧮 QUICK MATH</h2><p class="muted">Solve the question and build your score.</p><div id="mathQuestion" class="result">Press START to begin.</div><input id="mathAnswer" type="number" inputmode="numeric" placeholder="Your answer"><button onclick="checkMath()">SUBMIT</button><button onclick="startMath()">START / NEXT</button><div id="mathResult" class="result">Score: 0</div></section>
+<section id="wordgame" class="panel"><h2>🔤 WORD SCRAMBLE</h2><p class="muted">Rearrange the letters to make a cyber-related word.</p><div id="scrambleWord" class="result">Press NEW WORD to play.</div><input id="wordAnswer" placeholder="Type the correct word" autocomplete="off"><button onclick="checkWord()">CHECK</button><button onclick="newWord()">NEW WORD</button><div id="wordResult" class="result">Ready.</div></section>
+
+<section id="simon" class="panel"><h2>🟩 SIMON SEQUENCE</h2><p class="muted">মনে রাখো কোন রঙের বাটনগুলো জ্বলেছে, তারপর একই ক্রমে চাপ দাও।</p><div id="simonBoard" style="display:grid;grid-template-columns:repeat(2, minmax(0,1fr));gap:9px;max-width:320px"><button style="height:78px;background:#124512" onclick="simonTap(0)">GREEN</button><button style="height:78px;background:#123d55" onclick="simonTap(1)">BLUE</button><button style="height:78px;background:#59400a" onclick="simonTap(2)">GOLD</button><button style="height:78px;background:#551515" onclick="simonTap(3)">RED</button></div><button onclick="simonStart()">START / NEXT ROUND</button><div id="simonResult" class="result">Press START to begin.</div></section>
+<section id="snake" class="panel"><h2>🐍 CYBER SNAKE</h2><p class="muted">Arrow buttons দিয়ে সাপ চালাও, সবুজ ডেটা সংগ্রহ করো।</p><div id="snakeBoard" style="display:grid;grid-template-columns:repeat(8,1fr);gap:3px;max-width:320px;touch-action:manipulation"></div><div style="text-align:center"><button onclick="snakeDir(0,-1)">↑</button><br><button onclick="snakeDir(-1,0)">←</button><button onclick="snakeDir(0,1)">↓</button><button onclick="snakeDir(1,0)">→</button></div><button onclick="snakeStart()">START / RESTART</button><div id="snakeResult" class="result">Score: 0</div></section>
+<section id="sudoku" class="panel"><h2>🔢 MINI SUDOKU 4×4</h2><p class="muted">প্রতি row, column এবং 2×2 box-এ 1–4 একবার করে বসাও।</p><div id="sudokuBoard" style="display:grid;grid-template-columns:repeat(4,48px);gap:4px"></div><button onclick="checkSudoku()">CHECK GRID</button><button onclick="newSudoku()">NEW PUZZLE</button><div id="sudokuResult" class="result">Fill the empty cells.</div></section>
+<section id="maze" class="panel"><h2>🧩 MAZE ESCAPE</h2><p class="muted">START থেকে EXIT-এ পৌঁছাও। দেয়াল পেরোনো যাবে না। Arrow button বা keyboard ব্যবহার করো।</p><div id="mazeBoard" style="display:grid;grid-template-columns:repeat(7, minmax(0,34px));gap:3px"></div><div style="text-align:center"><button onclick="mazeMove(0,-1)">↑</button><br><button onclick="mazeMove(-1,0)">←</button><button onclick="mazeMove(0,1)">↓</button><button onclick="mazeMove(1,0)">→</button></div><button onclick="mazeReset()">RESET MAZE</button><div id="mazeResult" class="result">Find the exit.</div></section>
+<section id="codebreaker" class="panel"><h2>🔐 CODE BREAKER</h2><p class="muted">৩টি ভিন্ন সংখ্যা দিয়ে গোপন কোড অনুমান করো। EXACT = সঠিক সংখ্যা ও অবস্থান, CLOSE = সংখ্যা আছে কিন্তু অবস্থান ভুল।</p><input id="breakerGuess" inputmode="numeric" maxlength="3" placeholder="Enter 3 different digits"><button onclick="breakerCheck()">SUBMIT GUESS</button><button onclick="breakerNew()">NEW CODE</button><div id="breakerResult" class="result">You have 8 attempts.</div></section>
+<section id="partyArena" class="panel"><h2>👥 CYBER PARTY ARENA — 2 TO 6 PLAYERS</h2>
+<p class="muted">একই ফোনে পালা করে ২–৬ জন খেলতে পারবে। এটি local pass-and-play; অনলাইন multiplayer নয়।</p>
+<label>NUMBER OF PLAYERS</label><select id="partyCount"><option value="2">2 Players</option><option value="3">3 Players</option><option value="4">4 Players</option><option value="5">5 Players</option><option value="6">6 Players</option></select>
+<label>GAME MODE</label><select id="partyMode"><option value="dice">🎲 Dice Battle</option><option value="math">🧠 Quick Math Duel</option></select>
+<button onclick="partyStart()">START MATCH</button>
+<div id="partyTurn" class="result">Choose players and start a match.</div>
+<div id="partyQuestion" class="result" style="display:none"></div>
+<input id="partyAnswer" type="number" inputmode="numeric" placeholder="Answer the math question" style="display:none">
+<button id="partyAction" onclick="partyAction()" style="display:none">ROLL DICE</button>
+<div id="partyScore" class="result">Scoreboard will appear here.</div>
+<button onclick="partyStart()">RESTART MATCH</button></section>
+<section id="neonArena" class="panel"><h2>🕹️ NEON CYBER ARENA</h2>
+<p class="muted">Arcade-style multiplayer reaction battle. একই ফোনে ২–৬ জন পালা করে খেলবে। প্রতিটি turn-এ আলো জ্বলা target-এ দ্রুত tap করো।</p>
+<div class="arcadeFrame">
+ <div class="arcadeTop"><span>● CYBER ARENA ONLINE</span><span id="arenaRound">ROUND 0 / 5</span></div>
+ <label>PLAYERS</label><select id="arenaCount"><option value="2">2 Players</option><option value="3">3 Players</option><option value="4">4 Players</option><option value="5">5 Players</option><option value="6">6 Players</option></select>
+ <button onclick="arenaStart()">▶ START ARENA</button>
+ <div class="arcadeScreen"><div id="arenaTurn" style="font: bold 13px monospace;color:#39ff14">READY TO ENTER THE ARENA</div><div id="arenaTarget" class="arcadeTarget">●</div><div id="arenaMessage" class="muted">Press START ARENA to begin.</div></div>
+ <div class="arcadePads" id="arenaPads"><button class="arcadePad" id="arenaPad0" onclick="arenaTap(0)">01</button><button class="arcadePad" id="arenaPad1" onclick="arenaTap(1)">02</button><button class="arcadePad" id="arenaPad2" onclick="arenaTap(2)">03</button><button class="arcadePad" id="arenaPad3" onclick="arenaTap(3)">04</button><button class="arcadePad" id="arenaPad4" onclick="arenaTap(4)">05</button><button class="arcadePad" id="arenaPad5" onclick="arenaTap(5)">06</button><button class="arcadePad" id="arenaPad6" onclick="arenaTap(6)">07</button><button class="arcadePad" id="arenaPad7" onclick="arenaTap(7)">08</button><button class="arcadePad" id="arenaPad8" onclick="arenaTap(8)">09</button></div>
+ <div id="arenaScore" class="arcadeScore">SCOREBOARD
+Start a match to play.</div>
+ <button onclick="arenaStart()">↻ RESTART MATCH</button>
+</div></section>
+<section id="colorCarnival" class="panel carnival">
+<h2>🎉 COLOR CARNIVAL</h2>
+<p style="text-align:center">A bright, classic-style board race. Take turns, roll the dice, and be the first to reach the finish!</p>
+<div class="carnival-info"><label for="carnivalCount">Players</label><select id="carnivalCount"><option value="2">2 Players</option><option value="3">3 Players</option><option value="4">4 Players</option><option value="5">5 Players</option><option value="6" selected>6 Players</option></select>
+<button onclick="carnivalStart()">NEW GAME</button></div>
+<div class="carnival-info"><div id="carnivalTurn">Choose players and press NEW GAME.</div><div class="carnival-die" id="carnivalDie">🎲</div><div style="text-align:center"><button id="carnivalRoll" onclick="carnivalRoll()" disabled>ROLL DICE</button></div><div id="carnivalMessage" style="text-align:center;margin-top:8px">First player to reach square 30 wins.</div></div>
+<div class="carnival-board" id="carnivalBoard" aria-label="30-square board"></div>
+<h3 style="color:#46318c">🏆 Players</h3><div class="carnival-score" id="carnivalScores">Start a game to see players.</div>
+<p style="font-size:11px;text-align:center">Local pass-and-play on one device • no internet required</p>
+</section>
+<section id="ludoGame" class="panel">
+<h2>🎲 CLASSIC LUDO</h2>
+<div class="ludoWrap">
+<p class="ludoIntro">A colorful classic Ludo-style game. 2–4 players take turns on one device. Roll a 6 to bring a token out, capture opponents, and get all four tokens home!</p>
+<div class="ludoSetup"><label for="ludoPlayers">PLAYERS</label><select id="ludoPlayers"><option value="2">2 Players</option><option value="3">3 Players</option><option value="4" selected>4 Players</option></select><button onclick="ludoNew()">NEW GAME</button></div>
+<div class="ludoTurn" id="ludoTurn">Choose players and press NEW GAME.</div>
+<div class="ludoBoard" id="ludoBoard"></div>
+<div class="ludoControls"><div class="ludoDie" id="ludoDie">🎲</div><button id="ludoRoll" onclick="ludoRoll()" disabled>ROLL DICE</button></div>
+<div id="ludoChoices" class="ludoChoices">Start a new game.</div>
+<div id="ludoScores" class="ludoScores"></div>
+<div class="ludoRules">Rules: Roll 6 to leave base. Landing on an opponent sends their token back to base (safe start squares are protected). Reach exactly 57 steps to finish a token. This is a simplified local Ludo version.</div>
+</div>
+</section>
+<section id="wrestling" class="panel"><div class="wrestle"><h2>🤼 COLOR WRESTLING ARENA</h2><p style="text-align:center">A friendly, cartoon-style 2-player sports game. Take turns choosing a move and build your energy score. No real fighting instructions.</p>
+<div class="wrestleArena"><div class="wrestleFighters">
+<div class="wrestleFighter" style="--fighter:#e34f78"><div class="wrestleAvatar">🤼‍♂️</div><b id="wrName0">PLAYER 1</b><div class="wrestleBar"><span id="wrBar0"></span></div><small>Energy: <b id="wrEnergy0">100</b></small></div>
+<div class="wrestleFighter" style="--fighter:#3689df"><div class="wrestleAvatar">🤼‍♀️</div><b id="wrName1">PLAYER 2</b><div class="wrestleBar"><span id="wrBar1"></span></div><small>Energy: <b id="wrEnergy1">100</b></small></div>
+</div><div id="wrTurn" style="font-weight:bold;color:#5542a6;margin:12px">Press START MATCH</div><div style="font-size:36px">🏟️ ⭐ 🏟️</div></div>
+<div style="text-align:center"><button onclick="wrStart()">START MATCH</button><button onclick="wrMove('quick')">⚡ QUICK MOVE</button><button onclick="wrMove('skill')">🌟 SKILL MOVE</button><button onclick="wrMove('guard')">🛡️ GUARD</button></div>
+<div class="wrestleLog" id="wrLog">Start a match. Players take turns on the same device.</div><div style="text-align:center;margin-top:8px"><button onclick="wrStart()">REMATCH</button></div></div></section>
+<section id="about" class="panel"><h2>🛡️ ABOUT TOWHID CYBER SYSTEM</h2><p class="muted">A black and neon-green cyber-style learning toolkit. Includes an always-visible animated radar display, basic network status, text encoding, a JavaScript pad and several mini games.</p><div class="result">Developed by Towhid<br>Version 1.0<br>Theme: Black + Neon Green</div></section>
+</main><footer>USE RESPONSIBLY • LEARN CYBER SECURITY SAFELY</footer>
+<script>
+
+let cyberAudio=null;
+function playCyberBootSound(){
+ try{
+  const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;
+  cyberAudio=new AC();const now=cyberAudio.currentTime;
+  // Original synthesized electronic terminal tones; no external audio file required.
+  const notes=[220,330,440,660,520,880,660,990,740,1100];
+  notes.forEach((freq,i)=>{const o=cyberAudio.createOscillator(),g=cyberAudio.createGain();o.type=i%3===0?'sawtooth':'square';o.frequency.setValueAtTime(freq,now+i*.43);g.gain.setValueAtTime(.0001,now+i*.43);g.gain.exponentialRampToValueAtTime(.045,now+i*.43+.025);g.gain.exponentialRampToValueAtTime(.0001,now+i*.43+.30);o.connect(g);g.connect(cyberAudio.destination);o.start(now+i*.43);o.stop(now+i*.43+.32)});
+ }catch(e){}
+}
+function startCyberLogin(){
+ const gate=document.getElementById('bootGate'),btn=document.getElementById('loginStart'),status=document.getElementById('bootStatus'),fill=document.getElementById('bootFill');
+ if(btn.disabled)return;btn.disabled=true;gate.classList.add('booting');playCyberBootSound();
+ const messages=['CONNECTING TO CYBER CORE…','VERIFYING SYSTEM MODULES…','LOADING MATRIX INTERFACE…','ENCRYPTED SESSION READY…','ACCESS GRANTED'];let step=0;
+ status.textContent=messages[0];
+ const tick=setInterval(()=>{step++;fill.style.width=Math.min(100,step*20)+'%';status.textContent=messages[Math.min(step,messages.length-1)];if(step>=5){clearInterval(tick);status.textContent='ACCESS GRANTED — WELCOME';setTimeout(()=>{gate.style.transition='opacity .45s';gate.style.opacity='0';setTimeout(()=>{gate.remove();document.body.classList.remove('locked')},470)},250)}},1000);
+}
+
+function show(id){document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));const el=document.getElementById(id);el.classList.add('active');el.scrollIntoView({behavior:'smooth',block:'start'});if(id==='wifi')checkNet()}
+function checkNet(){const online=navigator.onLine;document.getElementById('net').textContent=online?'● ONLINE':'● OFFLINE';document.getElementById('net').style.color=online?'#39ff14':'#ff6969';document.getElementById('wifiResult').textContent=online?'Browser reports an internet/network connection is available.':'Browser reports offline status.'}
+function encodeText(){try{document.getElementById('encOutput').textContent=btoa(unescape(encodeURIComponent(document.getElementById('encInput').value)))}catch(e){document.getElementById('encOutput').textContent='Could not encode this text.'}}
+function decodeText(){try{document.getElementById('encOutput').textContent=decodeURIComponent(escape(atob(document.getElementById('encInput').value.trim())))}catch(e){document.getElementById('encOutput').textContent='Invalid Base64 text.'}}
+
+function runHTML(){const code=document.getElementById('htmlCode').value;document.getElementById('htmlPreview').srcdoc=code}
+function runCSS(){
+ const css=document.getElementById('cssCode').value;
+ document.getElementById('cssPreview').srcdoc='<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><style>'+css.replace(/<\/style/gi,'<\\/style')+'</style></head><body><h2>CSS Preview</h2><p>Change the CSS and run again.</p></body></html>';
+}
+function runWebLab(){
+ const h=document.getElementById('labHTML').value,c=document.getElementById('labCSS').value,j=document.getElementById('labJS').value;
+ const safeCSS=c.replace(/<\/style/gi,'<\\/style');
+ const safeJS=j.replace(/<\/script/gi,'<\\/script');
+ document.getElementById('labPreview').srcdoc='<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><style>'+safeCSS+'</style></head><body>'+h+'<script>'+safeJS+'<\\/script></body></html>';
+}
+function runCode(){const out=document.getElementById('codeOutput');let logs=[];try{const fn=new Function('console',document.getElementById('codeInput').value);fn({log:(...a)=>logs.push(a.join(' ')),warn:(...a)=>logs.push('WARN: '+a.join(' ')),error:(...a)=>logs.push('ERROR: '+a.join(' '))});out.textContent=logs.join('\n')||'Code executed. No console output.'}catch(e){out.textContent='Error: '+e.message}}
+let answer=Math.floor(Math.random()*10)+1;function guessNum(){const v=Number(document.getElementById('guess').value);const r=document.getElementById('gameResult');if(v<1||v>10||!Number.isInteger(v)){r.textContent='Enter a whole number from 1 to 10.';return}r.textContent=v===answer?'Correct! You got it.':'Not this time. Try again!'}function newGame(){answer=Math.floor(Math.random()*10)+1;document.getElementById('guess').value='';document.getElementById('gameResult').textContent='New number selected. Guess again.'}
+checkNet();
+
+// Advanced mini-games
+let simonSeq=[],simonPos=0,simonBusy=false;
+function simonStart(){if(simonBusy)return;simonSeq.push(Math.floor(Math.random()*4));simonPos=0;simonBusy=true;document.getElementById('simonResult').textContent='Watch the sequence… Round '+simonSeq.length;let i=0;const buttons=document.querySelectorAll('#simonBoard button');const play=()=>{if(i>=simonSeq.length){simonBusy=false;document.getElementById('simonResult').textContent='Your turn! Repeat '+simonSeq.length+' steps.';return}const b=buttons[simonSeq[i++]];b.style.filter='brightness(2.5)';setTimeout(()=>{b.style.filter='';setTimeout(play,220)},420)};setTimeout(play,350)}
+function simonTap(n){if(simonBusy||!simonSeq.length)return;if(n!==simonSeq[simonPos]){document.getElementById('simonResult').textContent='Game over! You reached round '+simonSeq.length+'. Press START to try again.';simonSeq=[];return}simonPos++;if(simonPos===simonSeq.length){document.getElementById('simonResult').textContent='Correct! Press START for the next round.';simonBusy=false}}
+let snake=[],snakeFood={x:4,y:4},snakeVector={x:1,y:0},snakeLoop=null,snakeScore=0;
+function snakeDraw(){const board=document.getElementById('snakeBoard');board.innerHTML='';for(let y=0;y<8;y++)for(let x=0;x<8;x++){const cell=document.createElement('div');cell.style.cssText='height:32px;background:#061006;border:1px solid #164b16;border-radius:3px';if(snake.some(v=>v.x===x&&v.y===y))cell.style.background='#39ff14';if(snakeFood.x===x&&snakeFood.y===y)cell.style.background='#e6ff00';board.appendChild(cell)}}
+function snakeStart(){clearInterval(snakeLoop);snake=[{x:2,y:3},{x:1,y:3}];snakeVector={x:1,y:0};snakeScore=0;snakePlaceFood();snakeDraw();document.getElementById('snakeResult').textContent='Score: 0';snakeLoop=setInterval(()=>{const h={x:snake[0].x+snakeVector.x,y:snake[0].y+snakeVector.y};if(h.x<0||h.x>7||h.y<0||h.y>7||snake.some(v=>v.x===h.x&&v.y===h.y)){clearInterval(snakeLoop);document.getElementById('snakeResult').textContent='Game over! Final score: '+snakeScore;return}snake.unshift(h);if(h.x===snakeFood.x&&h.y===snakeFood.y){snakeScore++;snakePlaceFood()}else snake.pop();snakeDraw();document.getElementById('snakeResult').textContent='Score: '+snakeScore},420)}
+function snakePlaceFood(){do{snakeFood={x:Math.floor(Math.random()*8),y:Math.floor(Math.random()*8)}}while(snake.some(v=>v.x===snakeFood.x&&v.y===snakeFood.y))}
+function snakeDir(x,y){if(x===-snakeVector.x&&y===-snakeVector.y)return;snakeVector={x,y}}
+const sudokuSolution=[[1,2,3,4],[3,4,1,2],[2,1,4,3],[4,3,2,1]];let sudokuPuzzle=[];
+function newSudoku(){sudokuPuzzle=sudokuSolution.map(r=>r.slice());const holes=[1,3,4,6,8,11,13];holes.forEach(n=>sudokuPuzzle[Math.floor(n/4)][n%4]=0);const b=document.getElementById('sudokuBoard');b.innerHTML='';sudokuPuzzle.forEach((r,y)=>r.forEach((v,x)=>{const inp=document.createElement('input');inp.inputMode='numeric';inp.maxLength=1;inp.value=v||'';inp.disabled=!!v;inp.dataset.y=y;inp.dataset.x=x;inp.style.cssText='width:48px;height:48px;text-align:center;font-size:20px;padding:4px;margin:0;border-radius:5px';b.appendChild(inp)}));document.getElementById('sudokuResult').textContent='Fill all empty cells with 1–4.'}
+function checkSudoku(){const cells=[...document.querySelectorAll('#sudokuBoard input')];const vals=cells.map(i=>Number(i.value));const ok=vals.every((v,i)=>v===sudokuSolution[Math.floor(i/4)][i%4]);document.getElementById('sudokuResult').textContent=ok?'SOLVED! Excellent work.':'Not solved yet. Check each row, column and 2×2 box.'}newSudoku();
+const mazeMap=['S..#...','##.#.#.','...#.#.','.#...#.','.#.###.','...#..E','.......'];let mazePlayer={x:0,y:0};
+function mazeDraw(){const b=document.getElementById('mazeBoard');b.innerHTML='';mazeMap.forEach((row,y)=>row.split('').forEach((v,x)=>{const d=document.createElement('div');d.style.cssText='height:32px;display:grid;place-items:center;border:1px solid #176317;border-radius:3px;background:'+(v==='#'?'#173117':'#041004')+';color:#39ff14;font:bold 15px monospace';d.textContent=mazePlayer.x===x&&mazePlayer.y===y?'▶':v==='E'?'EXIT':v==='S'?'S':v==='#'?'':'·';b.appendChild(d)}))}
+function mazeReset(){mazePlayer={x:0,y:0};mazeDraw();document.getElementById('mazeResult').textContent='Find the exit.'}
+function mazeMove(dx,dy){const x=mazePlayer.x+dx,y=mazePlayer.y+dy;if(x<0||x>6||y<0||y>6||mazeMap[y][x]==='#')return;mazePlayer={x,y};mazeDraw();if(mazeMap[y][x]==='E')document.getElementById('mazeResult').textContent='ESCAPED! You found the exit.'}
+window.addEventListener('keydown',e=>{if(!document.getElementById('maze').classList.contains('active'))return;const m={ArrowUp:[0,-1],ArrowDown:[0,1],ArrowLeft:[-1,0],ArrowRight:[1,0]}[e.key];if(m){e.preventDefault();mazeMove(...m)}});mazeReset();
+let breakerCode='';let breakerTries=8;
+function breakerNew(){breakerCode='';while(breakerCode.length<3){const d=String(Math.floor(Math.random()*10));if(!breakerCode.includes(d))breakerCode+=d}breakerTries=8;document.getElementById('breakerGuess').value='';document.getElementById('breakerResult').textContent='New code created. You have 8 attempts.'}
+function breakerCheck(){const g=document.getElementById('breakerGuess').value.trim();const r=document.getElementById('breakerResult');if(!/^\d{3}$/.test(g)||new Set(g).size!==3){r.textContent='Enter exactly 3 different digits.';return}if(breakerTries<=0){r.textContent='No attempts left. Press NEW CODE.';return}let exact=0,close=0;for(let i=0;i<3;i++){if(g[i]===breakerCode[i])exact++;else if(breakerCode.includes(g[i]))close++}breakerTries--;if(exact===3){r.textContent='CODE CRACKED! You solved it.';breakerTries=0}else r.textContent='EXACT: '+exact+' | CLOSE: '+close+' | Attempts left: '+breakerTries+(breakerTries===0?' — Code was '+breakerCode:'')}
+breakerNew();
+
+function playRPS(user){const opts=['Rock','Paper','Scissors'];const cpu=opts[Math.floor(Math.random()*3)];let result=user===cpu?'DRAW':((user==='Rock'&&cpu==='Scissors')||(user==='Paper'&&cpu==='Rock')||(user==='Scissors'&&cpu==='Paper'))?'YOU WIN':'SYSTEM WINS';document.getElementById('rpsResult').textContent='You: '+user+'\nSystem: '+cpu+'\n'+result}
+let memoryCode='';function memoryStart(){memoryCode=String(Math.floor(1000+Math.random()*9000));document.getElementById('memoryInput').value='';const r=document.getElementById('memoryResult');r.textContent='Memorize this code: '+memoryCode;setTimeout(()=>{if(r.textContent.includes(memoryCode))r.textContent='Now type the code from memory and press CHECK.'},2500)}function memoryCheck(){const v=document.getElementById('memoryInput').value.trim();document.getElementById('memoryResult').textContent=v===memoryCode&&memoryCode?'ACCESS GRANTED — Correct memory!':'ACCESS DENIED — Try again. Press SHOW SEQUENCE for a new code.'}
+let reactionTimer=null,reactionReady=false,reactionStartTime=0;function reactionStart(){clearTimeout(reactionTimer);reactionReady=false;const b=document.getElementById('reactionTap');b.disabled=true;b.textContent='WAIT…';b.style.background='#092009';document.getElementById('reactionResult').textContent='Wait for GREEN…';reactionTimer=setTimeout(()=>{reactionReady=true;reactionStartTime=Date.now();b.disabled=false;b.textContent='TAP NOW!';b.style.background='#174d17'},1200+Math.random()*3000)}function reactionClick(){const b=document.getElementById('reactionTap');if(!reactionReady){clearTimeout(reactionTimer);document.getElementById('reactionResult').textContent='Too early! Press START TEST to try again.';b.disabled=true;return}const ms=Date.now()-reactionStartTime;reactionReady=false;b.disabled=true;b.textContent='WAIT…';b.style.background='#092009';document.getElementById('reactionResult').textContent='Your reaction time: '+ms+' ms'}
+const quizData=[['Which is safest for an account password?',['Your name','A long unique password','123456'],1,'Use a long, unique password.'],['What should you do with a suspicious link?',['Click quickly','Share it','Avoid it and verify the sender'],2,'Do not open unexpected suspicious links.'],['Should you share a one-time login code?',['No','Yes, with anyone','Post it online'],0,'Never share one-time login codes.'],['What does HTTPS help indicate?',['A secure connection to the site','The site is always honest','Free internet'],0,'HTTPS encrypts the connection, but does not guarantee a site is trustworthy.']];let quizIndex=-1;function nextQuiz(){quizIndex=(quizIndex+1)%quizData.length;const q=quizData[quizIndex];document.getElementById('quizQuestion').textContent=q[0];const box=document.getElementById('quizChoices');box.innerHTML='';q[1].forEach((choice,i)=>{const b=document.createElement('button');b.textContent=String.fromCharCode(65+i)+'. '+choice;b.onclick=()=>{document.getElementById('quizResult').textContent=(i===q[2]?'CORRECT! ':'NOT QUITE. ')+q[3]};box.appendChild(b)});document.getElementById('quizResult').textContent='Choose an answer.'}
+
+// Tic Tac Toe
+let tttCells=Array(9).fill(''),tttTurn='X',tttOver=false;
+function renderTTT(){const board=document.getElementById('tttBoard');board.innerHTML='';tttCells.forEach((v,i)=>{const b=document.createElement('button');b.textContent=v||' ';b.style.cssText='height:78px;font-size:28px;margin:0;border-radius:9px';b.disabled=!!v||tttOver;b.onclick=()=>moveTTT(i);board.appendChild(b)})}
+function moveTTT(i){if(tttOver||tttCells[i])return;tttCells[i]=tttTurn;const wins=[[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];const won=wins.some(line=>line.every(k=>tttCells[k]===tttTurn));if(won){tttOver=true;document.getElementById('tttResult').textContent=tttTurn+' wins!'}else if(tttCells.every(Boolean)){tttOver=true;document.getElementById('tttResult').textContent='Draw!'}else{tttTurn=tttTurn==='X'?'O':'X';document.getElementById('tttResult').textContent=tttTurn+"'s turn."}renderTTT()}
+function resetTTT(){tttCells=Array(9).fill('');tttTurn='X';tttOver=false;document.getElementById('tttResult').textContent="X's turn.";renderTTT()}resetTTT();
+// Quick Math
+let mathCorrect=0,mathScore=0;function startMath(){const a=1+Math.floor(Math.random()*20),b=1+Math.floor(Math.random()*20),op=Math.random()<.5?'+':'−';mathCorrect=op==='+'?a+b:a-b;document.getElementById('mathQuestion').textContent=a+' '+op+' '+b+' = ?';document.getElementById('mathAnswer').value='';document.getElementById('mathAnswer').focus()}
+function checkMath(){const v=document.getElementById('mathAnswer').value.trim();if(v===''){document.getElementById('mathResult').textContent='Enter an answer first. Score: '+mathScore;return}if(Number(v)===mathCorrect){mathScore++;document.getElementById('mathResult').textContent='Correct! Score: '+mathScore}else{document.getElementById('mathResult').textContent='Not quite. Correct answer: '+mathCorrect+'. Score: '+mathScore}startMath()}
+// Word Scramble
+const scrambleWords=['CYBER','ROUTER','SIGNAL','SECURE','MATRIX','CODING','FIREWALL','NETWORK'];let currentWord='';function newWord(){currentWord=scrambleWords[Math.floor(Math.random()*scrambleWords.length)];let mixed=currentWord;while(mixed===currentWord){mixed=currentWord.split('').sort(()=>Math.random()-.5).join('')}document.getElementById('scrambleWord').textContent='UNSCRAMBLE: '+mixed;document.getElementById('wordAnswer').value='';document.getElementById('wordResult').textContent='Find the correct word.'}
+function checkWord(){const v=document.getElementById('wordAnswer').value.trim().toUpperCase();if(!v){document.getElementById('wordResult').textContent='Type an answer first.';return}if(v===currentWord){document.getElementById('wordResult').textContent='CORRECT! You solved it.';newWord()}else{document.getElementById('wordResult').textContent='Not correct. Try again.'}}
+
+
+// Local multiplayer party games (2–6 players, pass-and-play)
+let partyPlayers=[],partyCurrent=0,partyRound=1,partyMode='dice',partyActive=false;
+const PARTY_ROUNDS=5;
+function partyStart(){
+  const count=Number(document.getElementById('partyCount').value);
+  partyMode=document.getElementById('partyMode').value;
+  partyPlayers=Array.from({length:count},(_,i)=>({name:'Player '+(i+1),score:0}));
+  partyCurrent=0;partyRound=1;partyActive=true;
+  document.getElementById('partyAnswer').value='';
+  document.getElementById('partyAnswer').style.display=partyMode==='math'?'block':'none';
+  document.getElementById('partyQuestion').style.display=partyMode==='math'?'block':'none';
+  document.getElementById('partyAction').style.display='inline-block';
+  document.getElementById('partyAction').textContent=partyMode==='dice'?'🎲 ROLL DICE':'SUBMIT ANSWER';
+  partyPrepareTurn();partyRender();
+}
+function partyPrepareTurn(){
+  const player=partyPlayers[partyCurrent];
+  document.getElementById('partyTurn').textContent='ROUND '+partyRound+'/'+PARTY_ROUNDS+' — '+player.name+"'s turn. Pass the phone to "+player.name+'.';
+  if(partyMode==='math'){
+    const a=2+Math.floor(Math.random()*18),b=2+Math.floor(Math.random()*18);
+    window.partyMathAnswer=a+b;
+    document.getElementById('partyQuestion').textContent=player.name+': '+a+' + '+b+' = ?';
+    document.getElementById('partyAnswer').value='';
+  } else document.getElementById('partyQuestion').textContent='Tap ROLL DICE to score 1–6 points.';
+}
+function partyRender(){
+  const sorted=partyPlayers.map(p=>p).sort((a,b)=>b.score-a.score);
+  document.getElementById('partyScore').textContent='SCOREBOARD\n'+sorted.map((p,i)=>(i+1)+'. '+p.name+' — '+p.score+' points').join('\n');
+}
+function partyAction(){
+  if(!partyActive)return;
+  const player=partyPlayers[partyCurrent];let msg='';
+  if(partyMode==='dice'){
+    const roll=1+Math.floor(Math.random()*6);player.score+=roll;msg=player.name+' rolled '+roll+'!';
+  } else {
+    const val=document.getElementById('partyAnswer').value.trim();
+    if(val===''){document.getElementById('partyTurn').textContent='Enter your answer first.';return;}
+    if(Number(val)===window.partyMathAnswer){player.score+=3;msg='Correct! +3 points.';}else msg='Not correct. No points this turn.';
+  }
+  partyRender();
+  partyCurrent++;
+  if(partyCurrent>=partyPlayers.length){partyCurrent=0;partyRound++;}
+  if(partyRound>PARTY_ROUNDS){partyActive=false;document.getElementById('partyTurn').textContent='🏆 MATCH FINISHED! '+partyPlayers.slice().sort((a,b)=>b.score-a.score)[0].name+' is the winner!';document.getElementById('partyAction').style.display='none';document.getElementById('partyQuestion').style.display='none';document.getElementById('partyAnswer').style.display='none';return;}
+  partyPrepareTurn();document.getElementById('partyTurn').textContent=msg+'\n'+document.getElementById('partyTurn').textContent;
+}
+
+
+// Neon Cyber Arena: local 2–6 player pass-and-play arcade reaction game
+let arenaPlayers=[],arenaPlayer=0,arenaRoundNo=1,arenaTurnNo=0,arenaTargetIndex=-1,arenaWaiting=false,arenaTimer=null,arenaStartedAt=0,arenaActive=false;
+const ARENA_TURNS=5;
+function arenaStart(){
+ clearTimeout(arenaTimer);const count=Number(document.getElementById('arenaCount').value);
+ arenaPlayers=Array.from({length:count},(_,i)=>({name:'Player '+(i+1),score:0}));arenaPlayer=0;arenaRoundNo=1;arenaTurnNo=0;arenaActive=true;arenaWaiting=false;
+ document.getElementById('arenaRound').textContent='ROUND 1 / '+ARENA_TURNS;arenaRender();arenaNextTurn();
+}
+function arenaRender(){const sorted=arenaPlayers.slice().sort((a,b)=>b.score-a.score);document.getElementById('arenaScore').textContent='🏆 LIVE SCOREBOARD\n'+sorted.map((p,i)=>(i+1)+'. '+p.name+' — '+p.score+' pts').join('\n')}
+function arenaNextTurn(){
+ if(!arenaActive)return;arenaTargetIndex=-1;arenaWaiting=false;
+ document.querySelectorAll('.arcadePad').forEach(b=>b.classList.remove('lit'));
+ const player=arenaPlayers[arenaPlayer];document.getElementById('arenaTurn').textContent=player.name+' — YOUR TURN';document.getElementById('arenaTarget').classList.remove('ready');document.getElementById('arenaTarget').textContent='●';document.getElementById('arenaMessage').textContent='Wait for a green target, then tap it!';
+ arenaTimer=setTimeout(()=>{if(!arenaActive)return;arenaTargetIndex=Math.floor(Math.random()*9);arenaWaiting=true;arenaStartedAt=Date.now();document.getElementById('arenaPad'+arenaTargetIndex).classList.add('lit');document.getElementById('arenaTarget').classList.add('ready');document.getElementById('arenaTarget').textContent='GO!';document.getElementById('arenaMessage').textContent='TARGET ACTIVE — TAP THE GLOWING PAD!';},900+Math.random()*2100);
+}
+function arenaTap(index){
+ if(!arenaActive)return;
+ const msg=document.getElementById('arenaMessage');
+ if(!arenaWaiting){msg.textContent='TOO EARLY! Wait for the green target.';return;}
+ if(index!==arenaTargetIndex){msg.textContent='Wrong pad! Find the glowing green target.';return;}
+ const ms=Date.now()-arenaStartedAt;const points=Math.max(10,Math.round(1000-ms));arenaPlayers[arenaPlayer].score+=points;arenaWaiting=false;clearTimeout(arenaTimer);
+ document.querySelectorAll('.arcadePad').forEach(b=>b.classList.remove('lit'));document.getElementById('arenaTarget').classList.remove('ready');document.getElementById('arenaTarget').textContent='✓';msg.textContent='NICE HIT! '+ms+' ms — +'+points+' POINTS';arenaRender();
+ arenaAdvance();
+}
+function arenaAdvance(){
+ arenaTurnNo++;arenaPlayer++;
+ if(arenaPlayer>=arenaPlayers.length){arenaPlayer=0;arenaRoundNo++;document.getElementById('arenaRound').textContent='ROUND '+Math.min(arenaRoundNo,ARENA_TURNS)+' / '+ARENA_TURNS;}
+ if(arenaRoundNo>ARENA_TURNS){arenaActive=false;const winner=arenaPlayers.slice().sort((a,b)=>b.score-a.score)[0];document.getElementById('arenaTurn').textContent='🏆 '+winner.name+' WINS THE CYBER ARENA!';document.getElementById('arenaMessage').textContent='MATCH COMPLETE — RESTART TO PLAY AGAIN';document.getElementById('arenaTarget').textContent='★';return;}
+ setTimeout(arenaNextTurn,1100);
+}
+
+const c=document.getElementById('rain'),ctx=c.getContext('2d');let drops=[];function resize(){c.width=innerWidth;c.height=innerHeight;drops=Array(Math.ceil(c.width/16)).fill(1)}window.addEventListener('resize',resize);resize();function draw(){ctx.fillStyle='rgba(0,0,0,.08)';ctx.fillRect(0,0,c.width,c.height);ctx.fillStyle='#39ff14';ctx.font='14px monospace';for(let i=0;i<drops.length;i++){const t=String.fromCharCode(33+Math.random()*90);ctx.fillText(t,i*16,drops[i]*16);if(drops[i]*16>c.height&&Math.random()>.975)drops[i]=0;drops[i]++}requestAnimationFrame(draw)}draw();
+
+// COLOR CARNIVAL — local 2–6 player, bright classic board race
+const carnivalColors=['#e85d75','#3689df','#20a875','#e5a52b','#9a67d5','#e77b35'];
+const carnivalEmojis=['🔴','🔵','🟢','🟡','🟣','🟠'];
+let carnivalPlayers=[],carnivalTurn=0,carnivalActive=false;
+function carnivalStart(){
+ const count=Number(document.getElementById('carnivalCount').value);
+ carnivalPlayers=Array.from({length:count},(_,i)=>({name:'Player '+(i+1),pos:0,color:carnivalColors[i],emoji:carnivalEmojis[i]}));
+ carnivalTurn=0;carnivalActive=true;
+ document.getElementById('carnivalDie').textContent='🎲';
+ document.getElementById('carnivalMessage').textContent='Game started! Roll the dice.';
+ document.getElementById('carnivalRoll').disabled=false;
+ carnivalRender();
+}
+function carnivalRender(){
+ const board=document.getElementById('carnivalBoard');board.innerHTML='';
+ for(let n=1;n<=30;n++){const cell=document.createElement('div');cell.className='carnival-cell'+(n===30?' finish':'');
+ const num=document.createElement('span');num.textContent=n===30?'🏁 FINISH':n;cell.appendChild(num);
+ carnivalPlayers.filter(p=>p.pos===n).forEach(p=>{const token=document.createElement('span');token.className='carnival-token';token.textContent=p.emoji;token.title=p.name;cell.appendChild(token)});board.appendChild(cell)}
+ document.getElementById('carnivalScores').innerHTML=carnivalPlayers.map((p,i)=>`<div class="carnival-player ${i===carnivalTurn&&carnivalActive?'current':''}" style="--pc:${p.color}"><b>${p.emoji} ${p.name}</b><br>Square ${p.pos} / 30</div>`).join('');
+ if(carnivalActive)document.getElementById('carnivalTurn').textContent=carnivalPlayers[carnivalTurn].name+' — your turn';
+}
+function carnivalRoll(){
+ if(!carnivalActive||!carnivalPlayers.length)return;
+ const p=carnivalPlayers[carnivalTurn],roll=1+Math.floor(Math.random()*6);
+ document.getElementById('carnivalDie').textContent=['','⚀','⚁','⚂','⚃','⚄','⚅'][roll];
+ const old=p.pos;p.pos=Math.min(30,p.pos+roll);
+ if(p.pos===30){carnivalRender();document.getElementById('carnivalTurn').textContent='🏆 '+p.name+' WINS!';document.getElementById('carnivalMessage').textContent=p.name+' reached the finish! Start a new game to play again.';document.getElementById('carnivalRoll').disabled=true;carnivalActive=false;return;}
+ document.getElementById('carnivalMessage').textContent=p.name+' rolled '+roll+' and moved from '+old+' to '+p.pos+'.';
+ carnivalTurn=(carnivalTurn+1)%carnivalPlayers.length;carnivalRender();
+}
+
+// Classic Ludo local pass-and-play
+const ludoColors=['red','green','yellow','blue'];
+const ludoNames=['RED','GREEN','YELLOW','BLUE'];
+const ludoStarts=[0,13,26,39];
+let ludoState=null;
+function ludoPath(){const a=[];for(let x=0;x<13;x++)a.push([0,x]);for(let y=1;y<13;y++)a.push([y,12]);for(let x=11;x>=0;x--)a.push([12,x]);for(let y=11;y>=1;y--)a.push([y,0]);return a;}
+function ludoNew(){const n=Number(document.getElementById('ludoPlayers').value);ludoState={n,turn:0,die:0,rolled:false,players:Array.from({length:n},(_,i)=>({name:ludoNames[i],color:ludoColors[i],tokens:[-1,-1,-1,-1]})),done:false};document.getElementById('ludoDie').textContent='🎲';document.getElementById('ludoChoices').textContent='Roll the dice to begin.';document.getElementById('ludoRoll').disabled=false;ludoRender();ludoSay();}
+function ludoSay(msg){const p=ludoState.players[ludoState.turn];document.getElementById('ludoTurn').textContent=msg||(`${p.name} player's turn — roll the dice`);}
+function ludoRoll(){if(!ludoState||ludoState.done||ludoState.rolled)return;const s=ludoState;s.die=1+Math.floor(Math.random()*6);s.rolled=true;document.getElementById('ludoDie').textContent=['⚀','⚁','⚂','⚃','⚄','⚅'][s.die-1];document.getElementById('ludoRoll').disabled=true;const p=s.players[s.turn],movable=p.tokens.map((v,i)=>({v,i})).filter(t=>(t.v===-1&&s.die===6)||(t.v>=0&&t.v<57&&t.v+s.die<=57));if(!movable.length){document.getElementById('ludoChoices').textContent=`No valid move. ${s.die===6?'You rolled a 6!':'Turn passes.'}`;setTimeout(ludoNext,850);return;}document.getElementById('ludoChoices').innerHTML='Choose a token: '+movable.map(t=>`<button class="ludoPick" style="background:${p.color==='yellow'?'#f9a825':p.color==='green'?'#2e7d32':p.color==='blue'?'#1565c0':'#d32f2f'}" onclick="ludoMove(${t.i})">TOKEN ${t.i+1}</button>`).join('');ludoSay(`${p.name} rolled ${s.die}. Choose a token.`);}
+function ludoMove(i){const s=ludoState;if(!s||!s.rolled||s.done)return;const p=s.players[s.turn],old=p.tokens[i];let next=old===-1?0:old+s.die;p.tokens[i]=next;if(next>=0&&next<52){const boardIndex=(ludoStarts[s.turn]+next)%52;const safe=[0,8,13,21,26,34,39,47].includes(boardIndex);if(!safe){s.players.forEach((op,pi)=>{if(pi===s.turn)return;op.tokens=op.tokens.map(v=>{if(v>=0&&v<52&&(ludoStarts[pi]+v)%52===boardIndex){return -1;}return v;});});}}const won=p.tokens.every(v=>v===57);if(won){s.done=true;document.getElementById('ludoChoices').textContent=`🏆 ${p.name} WINS! All four tokens are home.`;document.getElementById('ludoRoll').disabled=true;}else{document.getElementById('ludoChoices').textContent=next===57?`Token ${i+1} reached home!`:next===0&&old===-1?`Token ${i+1} entered the board!`:`Token ${i+1} moved ${s.die} steps.`;if(s.die!==6)setTimeout(ludoNext,700);else{s.rolled=false;document.getElementById('ludoRoll').disabled=false;ludoSay(`${p.name} rolled a 6 — roll again!`);}}ludoRender();}
+function ludoNext(){const s=ludoState;if(!s||s.done)return;s.turn=(s.turn+1)%s.n;s.rolled=false;document.getElementById('ludoRoll').disabled=false;document.getElementById('ludoChoices').textContent='Next player, roll the dice.';ludoSay();ludoRender();}
+function ludoRender(){const board=document.getElementById('ludoBoard');if(!board||!ludoState)return;const path=ludoPath(),cells=Array.from({length:169},()=>'<div class="ludoCell"></div>');const idx=(r,c)=>r*13+c;[['base-red',0,0],['base-green',0,9],['base-yellow',9,9],['base-blue',9,0]].forEach(([cl,r,c])=>{for(let y=r;y<r+4;y++)for(let x=c;x<c+4;x++)cells[idx(y,x)]=`<div class="ludoCell ${cl}"></div>`});path.forEach(([r,c],k)=>{const col=['red','green','yellow','blue'].find((_,pi)=>ludoStarts[pi]===k);cells[idx(r,c)]=`<div class="ludoCell track ${[0,8,13,21,26,34,39,47].includes(k)?'safe':''}" id="ludoTrack${k}">${col?'★':''}</div>`});cells[idx(6,6)]='<div class="ludoCell center">HOME</div>';board.innerHTML=cells.join('');ludoState.players.forEach((p,pi)=>p.tokens.forEach((v,ti)=>{let target;if(v===-1){const base=[[1,1],[1,10],[10,10],[10,1]][pi];const offsets=[[0,0],[0,1],[1,0],[1,1]][ti];target=idx(base[0]+offsets[0],base[1]+offsets[1]);}else if(v<52){const k=(ludoStarts[pi]+v)%52,[r,c]=path[k];target=idx(r,c);}else{const homes=[[5,1],[1,7],[7,11],[11,5]];const [r,c]=homes[pi];target=idx(Math.min(12,r+Math.floor((v-52)/3)),Math.min(12,c));}const cell=board.children[target];if(cell){const b=document.createElement('span');b.className='ludoToken '+p.color;b.textContent=String(ti+1);b.title=p.name+' token '+(ti+1);cell.appendChild(b);}}));document.getElementById('ludoScores').innerHTML=ludoState.players.map(p=>`<div class="ludoScore"><b style="color:${p.color==='yellow'?'#a36b00':p.color==='green'?'#2e7d32':p.color==='blue'?'#1565c0':'#c62828'}">${p.name}</b><br>Home: ${p.tokens.filter(v=>v===57).length}/4 · On board: ${p.tokens.filter(v=>v>=0&&v<57).length}/4</div>`).join('');}
+
+
+// Friendly turn-based wrestling arcade game (fictional sports scoring only)
+let wrState=null;
+function wrStart(){wrState={energy:[100,100],turn:0,round:1,done:false};wrRender();document.getElementById('wrLog').textContent='Match started! Player 1, choose a move.';}
+function wrMove(kind){if(!wrState||wrState.done){document.getElementById('wrLog').textContent='Press START MATCH first.';return;}const s=wrState,me=s.turn,op=1-me;let msg='';
+ if(kind==='quick'){const pts=8+Math.floor(Math.random()*9);s.energy[op]=Math.max(0,s.energy[op]-pts);s.energy[me]=Math.min(100,s.energy[me]+3);msg=`Player ${me+1} scored a quick arcade point! Player ${op+1} energy -${pts}.`;}
+ else if(kind==='skill'){const pts=13+Math.floor(Math.random()*13);s.energy[op]=Math.max(0,s.energy[op]-pts);s.energy[me]=Math.max(0,s.energy[me]-5);msg=`Player ${me+1} used a special show move! Opponent energy -${pts}; own energy -5.`;}
+ else{const gain=10+Math.floor(Math.random()*11);s.energy[me]=Math.min(100,s.energy[me]+gain);msg=`Player ${me+1} used a guard and recovered ${gain} energy.`;}
+ if(s.energy[op]===0){s.done=true;msg+=` 🏆 PLAYER ${me+1} WINS THE MATCH!`;}
+ else{s.turn=op;s.round++;msg+=` Player ${op+1}, your turn.`;}
+ document.getElementById('wrLog').textContent=msg;wrRender();}
+function wrRender(){if(!wrState)return;for(let i=0;i<2;i++){document.getElementById('wrEnergy'+i).textContent=wrState.energy[i];document.getElementById('wrBar'+i).style.width=wrState.energy[i]+'%';}document.getElementById('wrTurn').textContent=wrState.done?'🏆 MATCH COMPLETE':`ROUND ${wrState.round} — PLAYER ${wrState.turn+1}'S TURN`;}
+
+</script></body></html>
